@@ -201,7 +201,6 @@ public class MDR
 					for (String nrr : ParseDR(tr, pdr))
 						ret.add(nrr);
 			}
-
 			tr.RemoveNode();
 		}
 		return ret.toArray(new String[ret.size()]);
