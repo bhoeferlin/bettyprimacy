@@ -9,6 +9,7 @@ public class Tree implements Comparable
 	public List<String> dat;//存放树中所有节点的dat域
 	public List<Object> cmt;//存放树中所有节点的Dom子树
 	public List<List<Integer>> chs; //存放每个节点的孩子节点,List表示
+	public Map<Integer, Integer> childParentMap;//存放每个孩子节点的父节点索引
 	
 	public Tree()
 	{
@@ -16,6 +17,7 @@ public class Tree implements Comparable
 		dat = new ArrayList<String>();
 		cmt = new ArrayList<Object>();
 		chs = new ArrayList<List<Integer>>();
+		childParentMap = new HashMap<Integer, Integer>();
 	}
 	
 	public int getChild(int r, int no)
@@ -124,8 +126,19 @@ public class Tree implements Comparable
 			}
 		}
 	}
-	
-	
+	/**
+	 * @param args
+	 * 生成孩子节点的父节点索引
+	 */
+	public void generateIndexMap(){
+		int i = 0;
+		for(List<Integer> childList:chs){
+			for(int index:childList){
+				childParentMap.put(index, i);
+			}
+			i++;
+		}
+	}
 	/**
 	 * @param args
 	 */
@@ -142,5 +155,4 @@ public class Tree implements Comparable
 		Tree t = (Tree)o;
 		return n - t.n;
 	}
-
 }

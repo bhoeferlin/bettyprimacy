@@ -7,6 +7,9 @@ import java.util.regex.Pattern;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
+import org.junit.runner.Result;
+
+import scala.inline;
 
 /*
  * MDR：MiningDataRecord(核心类)
@@ -50,6 +53,7 @@ public class MDR3
 			Element start = doc.getElementsByTag("html").first();
 			Tree tr = new Tree();
 			DfsTree(start, tr, -1);
+			tr.generateIndexMap();
 			return tr;
 		} catch (Exception ex) {
 			System.out.println(ex.toString());
@@ -124,7 +128,6 @@ public class MDR3
 					}
 				}
 		}
-
 		for (String simStr : chlTreeSimList) {
 			String[] simArray = simStr.split(" ");
 			int k = Integer.parseInt(simArray[3]), child1 = Integer
@@ -163,7 +166,7 @@ public class MDR3
 			if (flag == 1)
 				DRList.add(simStr);
 		}
-
+		
 		for (String DRStr : DRList) {
 			String[] simAarry = DRStr.split(" ");
 			int child1 = Integer.parseInt(simAarry[1]), child2 = Integer
@@ -184,17 +187,20 @@ public class MDR3
 	/*
 	 * 将DR的下标转化为DomTree中的子树
 	 */
-	public String[] parseDR(Tree tr, String DRStr) {
+	public NodeData[] parseDR(Tree tr, String DRStr) {
 		String[] DRArray = DRStr.split(" ");
 		int node = Integer.parseInt(DRArray[0]), child1 = Integer
 				.parseInt(DRArray[1]);
 		int child2 = Integer.parseInt(DRArray[2]), offset = Integer
 				.parseInt(DRArray[3]);
-		List<String> resultList = new ArrayList<String>();
+		List<NodeData> resultList = new ArrayList<NodeData>();
 		for (int i = child1; i <= child2; i += offset) {
 			int vNode = tr.InsertNode("vnode", -1);
+			
 			for (int j = 0; j < offset; j++)
+			{
 				tr.chs.get(vNode).add(tr.getChild(node, i + j));
+			}
 
 			List<String> tempDRList = null;
 
@@ -202,50 +208,27 @@ public class MDR3
 				tempDRList = fetchDR(tr, vNode);
 
 			if (offset == 1 || tempDRList.isEmpty()) {
-				StringBuilder sb = new StringBuilder();
-				sb.append(((Element) tr.cmt.get(tr.getChild(node, i)))
-						.outerHtml());
-				resultList.add(sb.toString());
+				int vanode = tr.getChild(node, i);
+				int parentIndex = tr.childParentMap.get(vanode);
+				String data = ((Element) tr.cmt.get(tr.getChild(node, i)))
+						.outerHtml();
+				resultList.add(new NodeData(parentIndex, data, vanode));
 			} else {
 				for (String tempDR : tempDRList)
-					for (String result : parseDR(tr, tempDR))
+					for (NodeData result : parseDR(tr, tempDR))
 						resultList.add(result);
 			}
-
 			tr.RemoveNode();
 		}
-		return resultList.toArray(new String[resultList.size()]);
+		return resultList.toArray(new NodeData[resultList.size()]);
 	}
-
-	public void parse(String html) {
-		Tree tr = genDOMTree(html);
-
-		BufferedWriter bw;
-		try {
-			bw = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream("temp.txt"), "UTF-8"));
-			for (String tempString : fetchDR(tr, 0)) {
-				// System.out.println(tempString);
-				String[] sv = parseDR(tr, tempString);
-				if (sv.length < 2)
-					continue;
-				for (String ss : sv)
-					bw.write(ss.replace("\n", "") + "\n");
-				bw.write("-------------\n");
-			}
-
-			bw.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	/*
 	 * 遍历整颗DomTree获取MainDR
 	 */
-	public List<String[]> fetchMainDR(String html) {//String[]
-		Tree tree = genDOMTree(html);
-		List<String[]> resultList = new ArrayList<String[]>();
+	public List<NodeData[]> fetchMainDR(Tree tree) {//String[]
+//		System.out.println("总节点数n："+tree.n);
+		Map<Integer, List<NodeData>> clusterDataMap = new HashMap<Integer, List<NodeData>>();
+		List<NodeData[]> resultList = new ArrayList<NodeData[]>();
 		String[] result = new String[0];
 		int max = 0, feature, countA;
 		int minA = Integer.MAX_VALUE; 
@@ -267,51 +250,47 @@ public class MDR3
 
 			/*
 			 * 将所有可能的DR集合统一到vNode下，计算出最终的DR集合,
-			 * 取Text总和最大的DR作为唯一的DR      ？？？？？
+			 * 取Text总和最大的DR作为唯一的DR      
 			 */
+			List<NodeData[]> resultBeanList = new ArrayList<NodeData[]>();
 			for (String DRStr : fetchDR(tree, vIndex)) {
 //				System.out.println(DRStr);
 //				System.out.println("===============");
-				String[] DRArray = parseDR(tree, DRStr);
-				resultList.add(DRArray);
-				
-				feature = 0;
-				countA = 0;
-				for (String tempDR : DRArray)
-				{
-					feature += tempDR.replaceAll("\\s+", "").replaceAll("<.*?>", "").length();
-					//统计超链接个数
-//					countA += numHyperlink(tempDR); 
-				}
-				/*if(countA < minA){
-					result = DRArray;
-					minA = countA;
-				}*/
-				/*if (feature > max) {
-					result = DRArray;
-					max = feature;
-				}*/
+				NodeData[] drBean = parseDR(tree, DRStr);
+				resultBeanList.add(drBean);
 			}
-
+			structureCluster(clusterDataMap, resultBeanList);
+			nestSelect(clusterDataMap, resultBeanList);
+			for(int parentIndex:clusterDataMap.keySet()){
+				List<NodeData> DRArray = clusterDataMap.get(parentIndex);
+				/*
+				int i = 0;
+				String[] data = new String[DRArray.size()];
+				for (NodeData temp : DRArray)
+				{
+					 data[i++] = temp.getNodeData();
+					
+				}
+				resultList.add(data);
+				*/
+				resultList.add(DRArray.toArray(new NodeData[DRArray.size()]));
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-//		for (int i = 0; i < result.length; i++)
-//			result[i] = result[i].replace("\n", "");
-
-//		return result;
-		
 		return resultList;
 	}
 	
 	/*
 	 * 遍历整颗DomTree获取MainDR
 	 */
-	public String[] fetchModifyMainDR(String html) {//String[]
+	public List<NodeData[]> fetchModifyMainDR(String html) {//List<NodeData[]>
 		Tree tree = genDOMTree(html);
-		List<String[]> resultList = new ArrayList<String[]>();
-		String[] result = new String[0];
+		int num = tree.n;
+		Map<Integer, List<NodeData>> clusterDataMap = new HashMap<Integer, List<NodeData>>();
+		List<NodeData[]> resultList = new ArrayList<NodeData[]>();
+		List<NodeData> resultTemp = new ArrayList<NodeData>();
+		
 		int max = 0, feature, countA;
 		float minA = Float.MAX_VALUE; 
 		try {
@@ -331,159 +310,153 @@ public class MDR3
 			// System.out.println("===============");
 
 			/*
-			 * 将所有可能的DR集合统一到vNode下，计算出最终的DR集合,
-			 * 取Text总和最大的DR作为唯一的DR      
+			 * 将所有可能的DR集合统一到vNode下，计算出最终的DR集合
 			 */
+			List<NodeData[]> resultBeanList = new ArrayList<NodeData[]>();
 			for (String DRStr : fetchDR(tree, vIndex)) {
-//				System.out.println(DRStr);
+//				System.out.println("DataRecords:" + DRStr);
 //				System.out.println("===============");
-				String[] DRArray = parseDR(tree, DRStr);
-				resultList.add(DRArray);
-				
+				NodeData[] drBean = parseDR(tree, DRStr);
+				resultBeanList.add(drBean);
+			}
+			
+			//结构聚类
+			structureCluster(clusterDataMap, resultBeanList);
+			//嵌套处理（父亲节点的childIndex等于孩子节点parentIndex）
+			nestSelect(clusterDataMap, resultBeanList);
+			//parentIndex/n，剔除不满足阈值条件的
+			indexSelect(num, clusterDataMap);
+			
+			//结果筛选
+			for(int parentIndex:clusterDataMap.keySet()){
+				List<NodeData> DRArray = clusterDataMap.get(parentIndex);
+				String strAll = "";
+				String strRawAll = "";
 				feature = 0;
 				countA = 0;
 				
-				for (String tempDR : DRArray)
+				for (NodeData temp : DRArray)
 				{
-//					System.out.println("*******************************");
-//					System.out.println("原始文本：" + tempDR);
-//					System.out.println("去除标签文本：" + tempDR.replaceAll("\\s+", "").replaceAll("<.*?>", ""));
-					feature += tempDR.replaceAll("\\s+", "").replaceAll("<.*?>", "").length();
+					String tempDR = temp.getNodeData();
+					strRawAll += tempDR;
+					String str = tempDR.replaceAll("\\s+", "").replaceAll("<.*?>", "");
+					feature += str.length();
+					strAll += str;
 //					System.out.println("feature长度:"+feature);
 					//统计超链接标签密度
-					countA += numHyperlink(tempDR); 
+					countA += DomTreeUtils.numHyperlink(tempDR); 
 				}
-				float theta = (float)(countA + 1)/(feature + 1);
-				if(theta < minA && feature > 20){
-					result = DRArray;
-					minA = theta;
+				float linkaDensity = (float)countA/(feature + 1);
+				float tagTextLengthAvg = tagTextAvgCalculate(strAll, strRawAll);
+//				System.out.println("********************************");
+//				System.out.println(strRawAll);
+//				System.out.println("超链接标签密度：" + linkaDensity);
+				
+				//剔除超链接标签密度不符合指定条件的（<0.05）;剔除标签块平均文本长度不符合条件的（>0.2）;统计每个块的文本长度（>30）
+				if( linkaDensity > 0.05 &&linkaDensity < 0.1 &&tagTextLengthAvg>2 && feature > 30){
+					resultList.add(DRArray.toArray(new NodeData[DRArray.size()]));
 				}
-				/*if (feature > max) {
-					result = DRArray;
-					max = feature;
-				}*/
+//				
+//				if(linkaDensity < minA && feature > 30){     //
+//					resultTemp = DRArray;
+//					minA = linkaDensity;
+//				}
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+//		String[] result = new String[resultTemp.size()];
+//		for (int i = 0; i < resultTemp.size(); i++)
+//		{
+//			String data = resultTemp.get(i).getNodeData().replace("\n", "");
+//			result[i] = data;
+//		}
 
-		for (int i = 0; i < result.length; i++)
-			result[i] = result[i].replace("\n", "");
-
-		return result;
-		
-//		return resultList;
+//		return result;
+		return resultList;
 	}
 	/**
-	 * 统计字符串中超链接的个数
-	 * @param 
+	 * 计算每个块的标签文本平均长度
+	 * =(节点块总文本长度)/(节点总个数) 
 	 **/
-	public static int numHyperlink(String string){
-		int countA = 0;
-//		for(int i = 0; i <string.length; i++){
-//			String str = string[i];
-			Pattern regex = Pattern.compile("<a");
-			Matcher matcher = regex.matcher(string);
-			
-			while(matcher.find()){
-				countA += 1;
-			}
-			
-//		}
-		return countA;
+	private float tagTextAvgCalculate(String strAll, String strRawAll) {
+		float tagTextAvg = 0;
+		int WordLength = DomTreeUtils.getChineseLength(strAll);
+		int tagNum = DomTreeUtils.numTag(strRawAll);
+		tagTextAvg = (float)(WordLength+1)/(tagNum+1);
+		return tagTextAvg;
 	}
-
-	public void OutputTemp(String[] rs) {
-		BufferedWriter bw;
-		try {
-			bw = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream("temp1.txt"), "UTF-8"));
-			for (String rr : rs)
-				bw.write(rr.replace("\n", "") + "\n");
-			bw.close();
-		} catch (Exception e) {
-			e.printStackTrace();
+	
+	/**
+	 * 如果若干相似块具有相同的父节点，应该属于同一个相似块，将他们进行合并
+	 * 该方法目前只考虑上一层的父节点相同情况，可能会有遗漏
+	 **/
+	private void structureCluster(Map<Integer, List<NodeData>> clusterDataMap,
+			List<NodeData[]> resultBeanList) {
+		for(NodeData[] drBean:resultBeanList){
+			int parentIndex = -1;
+			List<NodeData> dataList = new ArrayList<NodeData>();
+			for(NodeData dr:drBean){
+				parentIndex = dr.parentIndex;
+//					String data = dr.getNodeData();
+				dataList.add(dr);
+			}
+			if(!clusterDataMap.containsKey(parentIndex)){
+				clusterDataMap.put(parentIndex, dataList);
+			}else {
+				clusterDataMap.get(parentIndex).addAll(dataList);
+			}
 		}
 	}
-
-	public String[] ParseMain(String content) {
-		Tree tr = genDOMTree(content);
-		String[] ret = new String[0];
-		double maxAvg = 0;
-		try {
-			for (String rr : fetchDR(tr, 0)) {
-				String[] sv = parseDR(tr, rr);
-				if (sv.length < 4)
-					continue;
-				double sm = 0;
-				for (int i = 0; i < sv.length; i++) {
-					sv[i] = sv[i].replace("\n", "");
-					sm += sv[i].length();
+	/**
+	 * 根据是否嵌套，将结果相似块中，嵌套的子模块并入父模块
+	 * 该方法没有考虑交叉嵌套的情况，具体效果不知  
+	 **/
+	private void nestSelect(Map<Integer, List<NodeData>> clusterDataMap,
+			List<NodeData[]> resultBeanList) {
+		Map<Integer, List<NodeData>> clusterDataMapTemp = new HashMap<Integer, List<NodeData>>();
+		clusterDataMapTemp = clusterDataMap;
+		for(NodeData[] nodeDataArr:resultBeanList){
+			int parentIndex = nodeDataArr[0].getParentIndex();
+			for(int pIndex:clusterDataMapTemp.keySet()){
+				if(pIndex==parentIndex) continue;
+				List<NodeData> nodeDataList = clusterDataMapTemp.get(pIndex);
+				for(NodeData drBean:nodeDataList){
+					int childIndex = drBean.getChildIndex();
+					if(childIndex == parentIndex){//孩子节点置于父节点区域
+						List<NodeData> childNodeDataList = clusterDataMapTemp.get(parentIndex);
+						try {
+							clusterDataMap.get(pIndex).addAll(childNodeDataList);
+							clusterDataMap.remove(parentIndex);
+						} catch (Exception e) {
+							continue;
+						}
+					}
 				}
-				sm = sm / sv.length;
-				if (sm > maxAvg) {
-					maxAvg = sm;
-					ret = sv;
-				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return ret;
-	}
-/*
-	public void Test() {
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					new FileInputStream("capacamera.txt"), "UTF-8"));
-			List<String> tn = new ArrayList<String>();
-			List<String> tt = new ArrayList<String>();
-			StringBuffer stringBuffer = new StringBuffer("");
-			String sr = null;
-			while ((sr = br.readLine()) != null) {
-				stringBuffer.append(sr);
-
-			}
-			br.close();
-
-			String[] ss = stringBuffer.toString().split("!=-=!");
-			tn.add(ss[0]);
-			tt.add(ss[1]);
-
-			File dir = new File("test/");
-			dir.mkdirs();
-
-			BufferedWriter bw;
-			for (int i = 0; i < tn.size(); i++) {
-//				System.out.println(tn.get(i));
-				String content = tt.get(i), fn = "test/";
-
-				bw = new BufferedWriter(new OutputStreamWriter(
-						new FileOutputStream(fn + tn.get(i) + ".txt"), "UTF-8"));
-				for (String z : fetchMainDR(content))
-					bw.write(z + "\n");
-				bw.close();
-
-				bw = new BufferedWriter(
-						new OutputStreamWriter(new FileOutputStream(fn
-								+ tn.get(i) + ".html"), "UTF-8"));
-				bw.write(content.replace("gb2312", "utf-8"));
-				bw.close();
-			}
-		} catch (Exception ex) {
-			System.out.println(ex.toString());
 		}
 	}
-*/
+
+	/**
+	 * 根据节点索引剔除不满足阈值条件的节点块
+	 * 阈值：0.95 
+	 **/
+	private void indexSelect(int num,Map<Integer, List<NodeData>> clusterDataMap) {
+		List<Integer> removeIndexList = new ArrayList<Integer>();
+		for(int pI:clusterDataMap.keySet()){
+			float indexRatio = (float)pI/num;
+			if(indexRatio > 0.95|| indexRatio < 0.05)
+				removeIndexList.add(pI);
+		}
+		for(int index:removeIndexList)
+			clusterDataMap.remove(index);
+	}
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String string = "[<li id=\"menu3\"><a href=\"/information/index.shtml\" onmouseover=\"javascript:switchSub(3)\" title=\"信息披露\" class=\"ma3\"></a></li>, <li id=\"menu4\"><a href=\"/university/index.shtml\" onmouseover=\"javascript:switchSub(4)\" title=\"信托大学\" class=\"ma3\"></a></li>]";
-		int c = numHyperlink(string);
-		System.out.println(c);
+		
 	}
-
 }
