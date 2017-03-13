@@ -9,6 +9,7 @@ import org.jsoup.nodes.*;
 /*
  * MDR：MiningDataRecord(核心类)
  * DataRecord：一条记录，相当于我们的block
+ * 最原始未经修改的算法
  */
 public class MDR
 {

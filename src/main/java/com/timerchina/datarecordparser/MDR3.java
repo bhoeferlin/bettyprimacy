@@ -1,19 +1,20 @@
 package com.timerchina.datarecordparser;
 
-import java.io.*;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import org.jsoup.*;
-import org.jsoup.nodes.*;
-import org.junit.runner.Result;
-
-import scala.inline;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 /*
  * MDR：MiningDataRecord(核心类)
  * DataRecord：一条记录，相当于我们的block
+ * 结合目录结构、mdr结果等对算法进行相关改进的（改进结果是否合理有待测试）
  */
 public class MDR3
 {
@@ -353,7 +354,7 @@ public class MDR3
 //				System.out.println("超链接标签密度：" + linkaDensity);
 				
 				//剔除超链接标签密度不符合指定条件的（<0.05）;剔除标签块平均文本长度不符合条件的（>0.2）;统计每个块的文本长度（>30）
-				if( linkaDensity > 0.05 &&linkaDensity < 0.1 &&tagTextLengthAvg>2 && feature > 30){
+				if( linkaDensity > 0.05 && linkaDensity < 0.1 &&tagTextLengthAvg>2 && feature > 30){
 					resultList.add(DRArray.toArray(new NodeData[DRArray.size()]));
 				}
 //				

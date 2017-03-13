@@ -70,5 +70,20 @@
 			<artifactId>excel-utils</artifactId>
 			<version>2.0.3-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+ 			<groupId>com.timerchina.hummingbird</groupId>
+  			<artifactId>sim-recommend</artifactId>
+  			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.1.37</version>
+		</dependency>
+		<dependency>
+			<groupId>com.timerchina.modules</groupId>
+			<artifactId>excel-utils</artifactId>
+			<version>2.0.3-SNAPSHOT</version>
+		</dependency>
   	</dependencies>
 </project>

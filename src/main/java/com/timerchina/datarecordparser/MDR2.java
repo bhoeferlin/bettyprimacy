@@ -6,13 +6,18 @@ import java.util.*;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 
+import com.timerchina.spider.downloader.HttpClientDownloader;
+import com.timerchina.spider.pojo.Page;
+import com.timerchina.spider.pojo.Request;
+
 /*
  * MDR：MiningDataRecord(核心类)
  * DataRecord：一条记录，相当于我们的block
+ * 修改了其中的文本长度计算方式，优化输出结果
  */
 public class MDR2 
 {
-	public double simThreshold = 0.8;// 相似度阈值
+	public double simThreshold = 0.7;// 相似度阈值
 	public int K = 10;// 广义节点DataRecord最大的节点数
 
 	/*
@@ -377,32 +382,16 @@ public class MDR2
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					new FileInputStream("tot.txt"), "UTF-8"));
-			List<String> tempList = new ArrayList<String>();
-			String string = null;
-			while ((string = br.readLine()) != null) {
-				String[] stringArray = string.split("\t");
-				if (stringArray.length < 2)
-					break;
-				tempList.add(stringArray[1]);
-			}
-			br.close();
-			/*
-			 * br = new BufferedReader(new InputStreamReader( new
-			 * FileInputStream("aa.html"), "UTF-8")); String bing =
-			 * br.readLine(); br.close();
-			 */
-			MDR2 lp = new MDR2();
-			// String content = tempList.get(0);
-			// lp.parse(content);
-			// lp.OutputTemp(lp.FindMainDR(content));
-
-			lp.Test();
-		} catch (Exception ex) {
-			System.out.println(ex.toString());
-		}
+		MDR2 lp = new MDR2();
+		Request request = new Request();
+		request.setUrl("http://club.autohome.com.cn/bbs/forum-c-3788-1.html#pvareaid=103177");
+		Page page = new HttpClientDownloader().download(request);
+		String content = page.getRawText();
+		
+		long start = System.currentTimeMillis();
+		lp.fetchMainDR(content);
+		long end = System.currentTimeMillis();
+		System.out.println("****MDR解析共用时"+(end-start)/1000+"s****");
 	}
 
 }
