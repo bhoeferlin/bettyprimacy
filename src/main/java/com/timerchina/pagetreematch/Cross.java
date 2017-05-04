@@ -1,8 +1,7 @@
-package com.timerchina.singleregex;
+package com.timerchina.pagetreematch;
 
 import java.util.List;
 
-import com.timerchina.regex.parser.PTMParser;
 import com.timerchina.utils.TagArrayStack;
 
 /**
@@ -13,20 +12,21 @@ public class Cross {
 	public static boolean isContainField = false;
 	public static int L = 20; //十字交叉阈值
 	
-	/*初级模板：十字交叉法*/
+	/**
+	 * 初级模板：十字交叉法
+	 * */
 	public static int primaryCross(List<String> tw, List<String> ts, int index) {
 		index = index + 1;
 		String dataTw = tw.get(index).replace("(", "").replace(")+", "");
 		String dataTs = ts.get(index).replace("(", "").replace(")+", "");
-//		boolean cateFlag = false;
 		
 		int delta = 0;
-		if(dataTw.contains("#PCDATA")&&ts.get(index+1).equals(dataTw)){//||HtmlProcessUtils.isContainWord(dataTw, PrimaryTemplateGenerator.wordSet)&&!dataTw.equals(dataTs)
+		if(dataTw.contains("#PCDATA")&&ts.get(index+1).equals(dataTw)){
 			delta = primaryBlockMatch(tw, ts, index, true);
 			if(delta > 0)
 				tw.remove(index);//多了一个元素，需删除
 		}
-		else if(dataTs.contains("#PCDATA")&&tw.get(index+1).equals(dataTs)){//||HtmlProcessUtils.isContainWord(dataTs, PrimaryTemplateGenerator.wordSet)&&!dataTw.equals(dataTs)
+		else if(dataTs.contains("#PCDATA")&&tw.get(index+1).equals(dataTs)){
 			delta = primaryBlockMatch(ts, tw, index, true);
 			if(delta > 0)
 				ts.remove(index);//多了一个元素，需删除
@@ -38,158 +38,32 @@ public class Cross {
 				delta = primaryBlockMatch(tw, ts, index, false);
 			}
 		}
-		/*
-		if((!dataTs.contains("#PCDATA")&&HtmlProcessUtils.isStr(dataTs)||HtmlProcessUtils.isContainWord(dataTs, PrimaryTemplateGenerator.wordSet))){ //ts包含文本dataTw.contains("</")&&
-			delta = lineMatch(ts, tw, index);
-		}
-		else if((!dataTw.contains("#PCDATA")&&HtmlProcessUtils.isStr(dataTw)||HtmlProcessUtils.isContainWord(dataTw, PrimaryTemplateGenerator.wordSet))){ // tw包含文本dataTs.contains("</")&&
-			delta = lineMatch(tw, ts, index);
-			cateFlag = true;
-		}
-		else if(dataTw.contains("</")&&dataTs.contains("</")){ //都包含结束标签
-//			System.out.println("都包含结束标签");
-			return -1;
-		}
-		else if(dataTw.contains("</")&&!dataTs.contains("</"))	//tw包含结束标签
-		{
-			delta = blockMatch(ts, tw, index);
-		}
-		else if(dataTs.contains("</")&&!dataTw.contains("</")){	//ts包含结束标签
-			delta = blockMatch(tw, ts, index);
-			cateFlag = true;
-		}
-		else if(dataTw.contains("#PCDATA")){
-			delta = blockMatch(ts, tw, index);
-			tw.remove(index);//多了一个元素，需删除
-		}
-		else if(dataTs.contains("#PCDATA")){
-			delta = blockMatch(tw, ts, index);
-			ts.remove(index);//多了一个元素，需删除
-			cateFlag = true;
-		}
-		else {	//都不包含结束标签，样本数据设为可选
-			delta = blockMatch(ts, tw, index);
-			if(delta == -1||!dataTw.equals(ts.get(index + delta))){
-				delta = blockMatch(tw, ts, index);
-				cateFlag = true;
-			}
-		}*/
 		
 		if(delta == -1) return -1;
-		/*
-		if(cateFlag){
-			for(int j = 0; j < delta; j++){
-				ts.add(index+j, "placeholder");
-				tw.set(index+j, "placeholder");
-			}
-		}
-		else {
-			for(int j = 0; j < delta ; j++){//保持两个数据的平衡
-				tw.add(index+j, "placeholder");
-				ts.set(index+j, "placeholder");
-			}
-		}
-		if(isContainField) tw.set(index, "#PCDATA?");
-		else
-			tw.set(index, "<S?>");
-			*/
 		return delta;
 	}
-	/*最终模板：十字交叉法*/
+	/**
+	 * 最终模板：十字交叉法
+	 * */
 	public static int finalCross(List<String> tw, List<String> ts, int index) {
-//		String dataTw = tw.get(index);
-//		String dataTs = ts.get(index);
-//		boolean cateFlag = false;
 		index = index + 1;
 		int delta = 0;
-		///////////////
-//		if(dataTw.contains("</")&&(dataTs.contains("#PCDATA")||HtmlProcessUtils.isContainWord(dataTs, PrimaryTemplateGenerator.wordSet))){ //ts包含文本 //
-//			delta = lineMatch(ts,tw,index);
-//		}
-//		else if((dataTs.contains("</")||dataTw.contains("<S?>"))&&(dataTw.contains("#PCDATA")||HtmlProcessUtils.isContainWord(dataTw, PrimaryTemplateGenerator.wordSet))){ // tw包含文本
-//			delta = lineMatch(tw,ts,index);
-////			cateFlag = true;
-//		}
-		///////////////////
 		delta = finalBlockMatch(ts, tw, index);
 		
 		if(delta == -1){
 			delta = finalBlockMatch(tw, ts, index);
 		}
-		/*
-		else if(dataTw.contains("</")&&dataTs.contains("</")){ //都包含结束标签
-//			System.out.println("都包含结束标签");
-			delta = -1;
-		}
-		else if(dataTw.contains("</")&&!dataTs.contains("</"))	//tw包含结束标签
-		{
-			delta = blockMatch(ts, tw, index);
-		}
-		else if(dataTs.contains("</")&&!dataTw.contains("</")){	//ts包含结束标签
-			delta = blockMatch(tw, ts, index);
-			cateFlag = true;
-		}
-		else {	//都不包含结束标签，样本数据设为可选
-			delta = blockMatch(ts, tw, index);
-			if(delta == -1||!dataTw.equals(ts.get(index + delta))){
-				delta = blockMatch(tw, ts, index);
-				cateFlag = true;
-			}
-		}
-		*/
 		if(delta == -1) return -1;
-		/*
-		if(cateFlag){
-			for(int j = 0; j < delta; j++){
-				ts.add(index+j, "placeholder");
-				tw.set(index+j, "placeholder");
-			}
-		}
-		else {
-			for(int j = 0; j < delta ; j++){//保持两个数据的平衡
-				tw.add(index+j, "placeholder");
-				ts.set(index+j, "placeholder");
-			}
-		}
-		*/
 		if(isContainField) tw.set(index, "#PCDATA?");
 		else
 			tw.set(index, "<S?>");
-		return delta;
-	}
-	/**
-	  * 按行匹配
-	  * */
-	public static int lineMatch(List<String> t1, List<String> t2, int index) { // t1为待比较的list
-		isContainField = false;
-		int delta = 1;
-		boolean flag = false;
-		for (int si = 0; si <= L; si++) {
-			try {
-				String t1Data = t1.get(index + si).replace("(", "").replace(")+", "");
-				String t2Data = t2.get(index).replace("(", "").replace(")+", "");
-				isContainField = isContainField||HtmlProcessUtils.isStr(t1Data)||HtmlProcessUtils.isStr(t2Data);
-				if (t1Data.equals(t2Data)) {
-					if (t1.get(index + si + 1).equals(t2.get(index + 1))) {
-						delta = si;
-						flag = true;
-						break;
-					}
-				}
-			} catch (Exception e) {
-				// 边界处理
-
-			}
-		}
-		if (!flag)
-			return -1;
 		return delta;
 	}
 	 /**
 	  * 初始模板
 	  * 栈存储block块，按块匹配
 	  * */
-	public static int primaryBlockMatch(List<String> t1, List<String> t2, int index, boolean flag) {
+	private static int primaryBlockMatch(List<String> t1, List<String> t2, int index, boolean flag) {
 		index = index - 1;
 		int delta = 1;
 		isContainField = false;
@@ -204,19 +78,19 @@ public class Cross {
 		boolean postContainPCDATAflag = false;
 		for (int i = index + insc + 1; i < index + insc + 4; i++) {
 			if (i < t1.size()) {
-				if (t1.get(i).contains("#PCDATA"))//||t2.get(i).contains("#PCDATA")
+				if (t1.get(i).contains("#PCDATA"))
 					postContainPCDATAflag = true;
 			}
 		}
-		if(!postContainPCDATAflag) t1Str = PTMParser.getNElement(t1, index + insc + 1, 3);//获取相异数据的后三个元素
-		else t1Str = PTMParser.getNElement(t1, index + insc + 1, 1);//获取相异数据的后1个元素
+		if(!postContainPCDATAflag) t1Str = HtmlProcessUtils.getNElement(t1, index + insc + 1, 3);//获取相异数据的后三个元素
+		else t1Str = HtmlProcessUtils.getNElement(t1, index + insc + 1, 1);//获取相异数据的后1个元素
 		
 		for (int si = 1; si <= L; si++) {
 			try {
 				String t2Data = t2.get(index + si).replace("(", "").replace(")+", "");
 				isContainField = isContainField||HtmlProcessUtils.isStr(t1Data)||HtmlProcessUtils.isStr(t2Data);
-				if(!postContainPCDATAflag) t2Str = PTMParser.getNElement(t2, index + si + 1, 3);
-				else t2Str = PTMParser.getNElement(t2, index + si + 1, 1);
+				if(!postContainPCDATAflag) t2Str = HtmlProcessUtils.getNElement(t2, index + si + 1, 3);
+				else t2Str = HtmlProcessUtils.getNElement(t2, index + si + 1, 1);
 				if (t1Data.equals(t2Data) && t1Str.equals(t2Str)) {
 					delta = si - 1;
 					break;
@@ -229,11 +103,6 @@ public class Cross {
 				// 边界处理
 			}
 		}
-//		if(delta == 0){
-//			if(isContainField) t2.add(index,"#PCDATA?");
-//			else t2.add(index,"<S?>");
-//			return 1;
-//		} 
 		for(int i = index + 1; i <= index + delta; i++){
 			if(isContainField){
 				t1.add(i, "#PCDATA?");
@@ -250,7 +119,7 @@ public class Cross {
 	 * 最终模板
 	 * 栈存储block块，按块匹配
 	 * */
-	public static int finalBlockMatch(List<String> t1, List<String> t2, int index){
+	private static int finalBlockMatch(List<String> t1, List<String> t2, int index){
 		index = index - 1;
 		int delta = 1;
 		isContainField = false;
@@ -267,18 +136,18 @@ public class Cross {
 			}
 		}
 		if (!flag)
-			t1Str = PTMParser.getNElement(t1, index + 2, 3);// 获取相异数据的后三个元素
+			t1Str = HtmlProcessUtils.getNElement(t1, index + 2, 3);// 获取相异数据的后三个元素
 		else
-			t1Str = PTMParser.getNElement(t1, index + 2, 1);// 获取相异数据的后1个元素
+			t1Str = HtmlProcessUtils.getNElement(t1, index + 2, 1);// 获取相异数据的后1个元素
 
 		for (int si = 0; si <= L; si++) {
 			try {
 				String t2Data = t2.get(index + si);
 				isContainField = isContainField|| HtmlProcessUtils.isStr(t1Data)|| HtmlProcessUtils.isStr(t2Data);
 				if (!flag)
-					t2Str = PTMParser.getNElement(t2, index + si + 1, 3);
+					t2Str = HtmlProcessUtils.getNElement(t2, index + si + 1, 3);
 				else
-					t2Str = PTMParser.getNElement(t2, index + si + 1, 1);
+					t2Str = HtmlProcessUtils.getNElement(t2, index + si + 1, 1);
 
 				if (t1Data.equals(t2Data) && t1Str.equals(t2Str)) {
 					delta = si - 1;
@@ -325,15 +194,15 @@ public class Cross {
 					flag = true;
 			}
 		}
-		if(!flag) t1Str = PTMParser.getNElement(t1, index + 2, 3);//获取相异数据的后三个元素
-		else t1Str = PTMParser.getNElement(t1, index + 2, 1);//获取相异数据的后1个元素
+		if(!flag) t1Str = HtmlProcessUtils.getNElement(t1, index + 2, 3);//获取相异数据的后三个元素
+		else t1Str = HtmlProcessUtils.getNElement(t1, index + 2, 1);//获取相异数据的后1个元素
 		
 		for (int si = 0; si <= L; si++) {
 			try {
 				String t2Data = t2.get(index + si);
 				isContainField = isContainField||HtmlProcessUtils.isStr(t1Data)||HtmlProcessUtils.isStr(t2Data);
-				if(!flag) t2Str = PTMParser.getNElement(t2, index + si + 1, 3);
-				else t2Str = PTMParser.getNElement(t2, index + si + 1, 1);
+				if(!flag) t2Str = HtmlProcessUtils.getNElement(t2, index + si + 1, 3);
+				else t2Str = HtmlProcessUtils.getNElement(t2, index + si + 1, 1);
 				
 				if (t1Data.equals(t2Data) && t1Str.equals(t2Str)) {
 					delta = si;
@@ -384,8 +253,6 @@ public class Cross {
 				count ++;
 				continue;
 			}
-//			else if (firstData.equals(t2.get(index)))// 标签中多一个单标签的情况
-//				return i - index;
 			else {
 				firstData = firstData.replace("<", "").replace(">", "");
 				break;
@@ -438,12 +305,12 @@ public class Cross {
 		String t1Str = "";
 		String t2Str = "";
 		if(!flag){
-			t1Str = PTMParser.getNElement(t1, index + delta, 3);
-			t2Str = PTMParser.getNElement(t2, index , 3);
+			t1Str = HtmlProcessUtils.getNElement(t1, index + delta, 3);
+			t2Str = HtmlProcessUtils.getNElement(t2, index , 3);
 		} 
 		else{
-			t1Str = PTMParser.getNElement(t1, index + delta, 1);
-			t2Str = PTMParser.getNElement(t2, index , 1);
+			t1Str = HtmlProcessUtils.getNElement(t1, index + delta, 1);
+			t2Str = HtmlProcessUtils.getNElement(t2, index , 1);
 		} 
 		if(t1Str.equals(t2Str)) {
 			//数据填充

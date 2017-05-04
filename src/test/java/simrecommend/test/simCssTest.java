@@ -1,7 +1,10 @@
 package simrecommend.test;
 
 import org.apache.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
+import com.timerchina.css.reccommend.CssRecommend;
 import com.timerchina.spider.downloader.HttpClientDownloader;
 import com.timerchina.spider.pojo.Page;
 import com.timerchina.spider.pojo.Request;
@@ -21,13 +24,13 @@ public class simCssTest {
 		try {
 			page = new HttpClientDownloader().download(request);
 			content = page.getRawText();
-			System.out.println(content);
-//			Document document = Jsoup.parse(content);
+//			System.out.println(content);
+			Document document = Jsoup.parse(content);
 			long start = System.currentTimeMillis();
-//			String simCss = CssRecommend.getSimCsses(document, css);
+			String simCss = CssRecommend.getSimCsses(document, css);
 			long end = System.currentTimeMillis();
 			logger.info("共用时："+(end-start)+"ms");
-//			logger.info(simCss);
+			logger.info(simCss);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

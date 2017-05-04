@@ -1,4 +1,4 @@
-package com.timerchina.datarecordparser;
+package com.timerchina.datarecord.parser;
 
 import java.io.*;
 import java.util.*;
@@ -34,8 +34,7 @@ public class MDR2
 			return;
 		int z = tr.n;
 		String nStr = root.tagName() + " ";
-		if (!(root.attr("class").endsWith("odd") || root.attr("class")
-				.endsWith("even")))
+		if (!(root.attr("class").endsWith("odd") || root.attr("class").endsWith("even")))
 			nStr = nStr + root.attr("class");
 		tr.InsertNode(nStr, nodeIndex);
 		tr.cmt.set(z, root);
@@ -256,10 +255,8 @@ public class MDR2
 			for (String DRStr : fetchDR(tree, 0)) {
 //				System.out.println(DRStr);
 				String[] DRArray = DRStr.split(" ");
-				int node = Integer.parseInt(DRArray[0]), child1 = Integer
-						.parseInt(DRArray[1]);
-				int child2 = Integer.parseInt(DRArray[2]), offset = Integer
-						.parseInt(DRArray[3]);
+				int node = Integer.parseInt(DRArray[0]), child1 = Integer.parseInt(DRArray[1]);
+				int child2 = Integer.parseInt(DRArray[2]), offset = Integer.parseInt(DRArray[3]);
 //				System.out.println("node:"+node+"\t"+tree.cmt.get(node));
 //				System.out.println("===============");
 				for (int i = child1; i < child2 + offset; i++)

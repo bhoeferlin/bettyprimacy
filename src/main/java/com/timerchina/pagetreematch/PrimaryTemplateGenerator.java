@@ -1,4 +1,4 @@
-package com.timerchina.singleregex;
+package com.timerchina.pagetreematch;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,36 +15,10 @@ public class PrimaryTemplateGenerator {
 		wordSet.add("input");
 		wordSet.add("meta");
 		wordSet.add("link");
-//		wordSet.add("#PCDATA");
-//		wordSet.add("<S?>");
-//		wordSet.add("#PCDATA?");
 	}
-	/**
-	 * 规格化处理：
-	 * 逐行读入HTML片段，如果读入的HTML代码是“<”或者“>”时，就输入一个换行符；否则，就直接写入；把连续出现两个换行符的行删掉一个。
-	 **/
-	public static List<String> normalize(String content){
-		content = content.replaceAll("<br>", "").replace("&nbsp;", "");
-		content = content.replaceAll("<!--.*?-->", "");		//去除注释
-		List<String> result = new ArrayList<String>();
-		content = content.replaceAll("\\<", "\n\\<");
-		content = content.replaceAll("\\>", "\\>\n");
-		String[] lineData = content.split("\n");
-		for(String str:lineData){
-			if(str.trim().length() == 0) continue;
-			if(!HtmlProcessUtils.isText(str)) continue;		//去除符号
-			else if(HtmlProcessUtils.isStr(str)){
-				result.add(str);
-			}else {
-				String tagName = str.split("\\s+")[0];
-				if(tagName.contains("<")&&!tagName.endsWith(">")) tagName = tagName + ">";
-				result.add(tagName);
-			}
-		}
-		return result;
-	}
+	
 	//将源码中的字符串替换为#PCDATA
-	public static void replace(List<String> list){
+	private static void replace(List<String> list){
 		for(int i = 0; i < list.size(); i ++){
 			String ws = list.get(i);
 			if(HtmlProcessUtils.isStr(ws)) {//字符串不匹配
@@ -53,7 +27,7 @@ public class PrimaryTemplateGenerator {
 		}
 	}
 	//分割及模板合并
-	public ArrayList<List<String>> segAndTemplateMerger(List<String> tw){
+	private ArrayList<List<String>> segAndTemplateMerger(List<String> tw){
 		replace(tw);
 		ArrayList<List<String>> fragmentLists = new ArrayList<List<String>>();
 		ArrayList<List<String>> fragmentListsTw = fragment(tw);
@@ -66,9 +40,8 @@ public class PrimaryTemplateGenerator {
 		return fragmentLists;
 	}
 	//初始模板构建
-	public ArrayList<List<String>> primaryTemplateBuilder(String str){
-		List<String> tw = normalize(str);
-//		System.out.println(tw);
+	public ArrayList<List<String>> buildPrimaryTemplate(String str){
+		List<String> tw = HtmlProcessUtils.normalize(str);
 		ArrayList<List<String>> fragmentListsTw = segAndTemplateMerger(tw);
 		if(fragmentListsTw == null||fragmentListsTw.size() == 0){
 			System.out.println("分段失败！");
@@ -80,14 +53,9 @@ public class PrimaryTemplateGenerator {
 		for(int i = 1; i < size; i++){
 			template = fragmentListsTw.get(i - 1);
 			List<String> ts = HtmlProcessUtils.deepCopy(fragmentListsTw.get(i));
-//			System.out.println("*************************************");
-//			System.out.println("index:"+i);
-//			System.out.println(template);
-//			System.out.println(ts);
 			List<String> fragmentList = new ArrayList<String>();
 			fragmentList = buildPrimaryTemplate(template, ts);
 			if(fragmentList == null||fragmentList.size() == 0) continue;
-//			System.out.println(fragmentList);
 			fragmentLists.add(fragmentList);
 		}
 		return fragmentLists;
@@ -95,10 +63,8 @@ public class PrimaryTemplateGenerator {
 	/**
 	 * 生成初级模板
 	 **/
-	public List<String> buildPrimaryTemplate(List<String> tw, List<String> ts){
-//		List<String> template = new ArrayList<String>();
+	private List<String> buildPrimaryTemplate(List<String> tw, List<String> ts){
 		int length = Math.max(tw.size(), ts.size());
-//		template = tw;
 		int delta = 1;
 		for(int i = 0; i < length; i = i + delta){
 			delta = 1;
@@ -167,7 +133,7 @@ public class PrimaryTemplateGenerator {
 	/**
 	 * 判断标签不匹配是否为模板不匹配
 	 * */
-	public static boolean isTemplateNotMatch(List<String> tw, List<String> ts, int index){
+	private static boolean isTemplateNotMatch(List<String> tw, List<String> ts, int index){
 		boolean isTemplate = false;
 		String currentTw = tw.get(index);
 		String currentTs = ts.get(index);
@@ -227,9 +193,5 @@ public class PrimaryTemplateGenerator {
 			}
 		}
 		return fragmentLists;
-	}
-	
-	public static void main(String[] args) {
-		
 	}
 }

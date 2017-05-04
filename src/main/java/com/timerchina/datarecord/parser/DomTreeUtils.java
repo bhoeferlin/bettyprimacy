@@ -1,4 +1,4 @@
-package com.timerchina.datarecordparser;
+package com.timerchina.datarecord.parser;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.timerchina.datarecordparser;
+package com.timerchina.datarecord.parser;
 
 public class NodeData {
 	int parentIndex;

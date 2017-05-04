@@ -1,4 +1,4 @@
-package com.timerchina.singleregex;
+package com.timerchina.pagetreematch;
 
 import java.util.List;
 import java.util.Queue;
@@ -20,16 +20,13 @@ public class PrimaryTemplateMerger {
 				int templateLen = 0;
 				boolean flag = false;
 				for(int j = i; j < end;j++){
-//					if(!template.get(j).contains("?")||!template.get(j).contains("placeholder"))
-						lowerStr += template.get(j);
+					lowerStr += template.get(j);
 					if(!template.get(j).equals(upperData)) continue;
 					// 向上找最近的模板开始标签
 					String upperStr = "";
 					for (int k = i - 1; k >= start; k--) {
-//						if (!template.get(k).contains("?") || !template.get(k).contains("placeholder")) {
-							upperStr = template.get(k) + upperStr;
-							templateLen++;
-//						}
+						upperStr = template.get(k) + upperStr;
+						templateLen++;
 						String preData = template.get(k);
 						if (!preData.equals(lowerData)) continue;
 						if (!lowerStr.equals(upperStr)) continue;
@@ -91,18 +88,10 @@ public class PrimaryTemplateMerger {
 		}
 	}
 
-	private static void templateProcess(List<String> template, int templateLen,
-			int count, int lastTemplateIndex) {//, Queue<String> limitQueue
+	private static void templateProcess(List<String> template, int templateLen,int count, int lastTemplateIndex) {
 		int startTemplateIndex;
 		startTemplateIndex = lastTemplateIndex - count * templateLen + 1;
 		template.set(startTemplateIndex, "(" + template.get(startTemplateIndex));
-		/*
-		int len = limitQueue.size();
-		limitQueue.poll();
-		for(int j = 1; j < limitQueue.size()-1; j++){
-			template.set(startTemplateIndex + j, limitQueue.element());
-			limitQueue.poll();
-		}*/
 		template.set(startTemplateIndex + templateLen -1, template.get(lastTemplateIndex) + ")+");
 		HtmlProcessUtils.delListByIndex(template, startTemplateIndex + templateLen, lastTemplateIndex);
 	}

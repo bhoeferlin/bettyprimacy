@@ -1,4 +1,4 @@
-package com.timerchina.datarecordparser;
+package com.timerchina.datarecord.parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -454,10 +454,4 @@ public class MDR3
 			clusterDataMap.remove(index);
 	}
 	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		
-	}
 }

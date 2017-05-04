@@ -1,4 +1,4 @@
-package com.timerchina.singleregex;
+package com.timerchina.pagetreematch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ public class PageTreeMatchMain {
 		List<String> resultList = new ArrayList<String>();
 		
 		PrimaryTemplateGenerator hnp = new PrimaryTemplateGenerator();
-		ArrayList<List<String>> fragmentLists = hnp.primaryTemplateBuilder(str);
+		ArrayList<List<String>> fragmentLists = hnp.buildPrimaryTemplate(str);
 		if(fragmentLists == null||fragmentLists.size() == 0){
 			System.out.println("初始模板构建失败！");
 			return null;
@@ -24,7 +24,6 @@ public class PageTreeMatchMain {
 		if(resultList == null){
 			return null;
 		} 
-//		System.out.println(resultList);
 		return resultList;
 	}
 	public static void main(String[] args) {

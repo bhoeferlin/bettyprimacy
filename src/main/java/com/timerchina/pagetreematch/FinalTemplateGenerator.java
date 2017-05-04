@@ -1,4 +1,4 @@
-package com.timerchina.singleregex;
+package com.timerchina.pagetreematch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ public class FinalTemplateGenerator {
 	/**
 	 * 外部迭代不匹配处理 
 	 **/
-	public List<String> outerIterUnmatchProcess(ArrayList<List<String>> fragmentLists){//List<String> template
+	public List<String> outerIterUnmatchProcess(ArrayList<List<String>> fragmentLists){
 	    //将每个fragment片段对比
 		List<String> reList = new ArrayList<String>();
 		if(fragmentLists.size() == 1){
@@ -17,8 +17,8 @@ public class FinalTemplateGenerator {
 		}
 		else reList = outFragment(fragmentLists);
 	    if(reList == null) return null;
-	    reList.set(0, reList.get(0));//"(" + 
-	    reList.set(reList.size()-1, reList.get(reList.size()-1));//+ ")+"
+	    reList.set(0, reList.get(0));
+	    reList.set(reList.size()-1, reList.get(reList.size()-1));
 	  //如果()?前后有成对标签，则删除该标签对
 		HtmlProcessUtils.delPairTag(reList);
 		HtmlProcessUtils.delListRepeatElement(reList, "#PCDATA?");
@@ -27,7 +27,7 @@ public class FinalTemplateGenerator {
 	/**
 	 * 通过十字交叉法，对初始模板进一步进行比较及合并
 	 * */
-	public static List<String> outFragment(ArrayList<List<String>> fragmentLists){
+	private List<String> outFragment(ArrayList<List<String>> fragmentLists){
 		int maxSize = fragmentLists.get(0).size();
 		List<String> tw = fragmentLists.get(0);
 		for(int i = 1; i < fragmentLists.size(); i++){
@@ -38,10 +38,6 @@ public class FinalTemplateGenerator {
 				maxSize = size;
 			}
 			if(size < maxSize * 0.7) continue;
-//			System.out.println("***************************");
-//			System.out.println("index:"+i);
-//			System.out.println("tw:"+tw);
-//			System.out.println("ts:"+ts);
 			int len = Math.max(tw.size(), ts.size());
 			int delta = 1;
 			for(int j = 0; j < len; j = j + delta){
@@ -60,7 +56,7 @@ public class FinalTemplateGenerator {
 					break;
 				}
 				// S?或#PCDATA?的情况，向后推若干元素，相等则全部覆盖
-				if(currentTw.contains("#PCDATA")&&currentTs.contains("#PCDATA")&&(currentTw+currentTs).contains("?"))//#PCDATA?与#PCDATA共存的情况
+				if(currentTw.contains("#PCDATA")&&currentTs.contains("#PCDATA")&&(currentTw + currentTs).contains("?"))//#PCDATA?与#PCDATA共存的情况
 					tw.set(j, "#PCDATA?");
 				if(currentTw.contains("?")&&!currentTw.equals(currentTs)){
 					delta = Cross.optionMatch(tw, ts, j);
@@ -75,10 +71,6 @@ public class FinalTemplateGenerator {
 					continue;
 				}
 				
-//				else if(currentTs.contains("#PCDATA?")&&!currentTw.equals(currentTs)){
-////					tw.add(j, "#PCDATA?");
-//					continue;
-//				}
 				//内部有迭代的情况
 				if(!currentTw.equals(currentTs)){
 					if(currentTw.contains("(")||currentTs.contains("(")){
@@ -105,7 +97,7 @@ public class FinalTemplateGenerator {
 										break;
 									}
 									else {
-//										//模板前面包含多余项且多余项起始于模板起始相同
+										//模板前面包含多余项且多余项起始于模板起始相同
 										delta = Cross.blockMatch(ts, tw, j);
 										if(delta == -1) {
 											delta = Cross.blockMatch(tw, ts, j);
@@ -142,11 +134,6 @@ public class FinalTemplateGenerator {
 				len = Math.max(tw.size(), ts.size());
 			}
 			HtmlProcessUtils.delListByElement(tw, "placeholder");
-			/*
-			if(tw.size() < maxSize * 0.75){
-				tw = template;
-				continue;
-			}*/
 			HtmlProcessUtils.delListRepeatElement(tw, "#PCDATA?");
 			HtmlProcessUtils.delListRepeatElement(tw, "<S?>");
 			HtmlProcessUtils.delListRepeatElementMore(tw);

@@ -1,25 +1,22 @@
-package com.timerchina.regex.parser;
+package com.timerchina.pagetreematch.parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.timerchina.singleregex.HtmlProcessUtils;
-import com.timerchina.singleregex.PrimaryTemplateGenerator;
+import com.timerchina.pagetreematch.HtmlProcessUtils;
+import com.timerchina.pagetreematch.PrimaryTemplateGenerator;
 
 public class PTMParser {
-	public static int fieldCount = 1;
+	private static int fieldCount = 1;
 	
 	public static List<Map<String, String>> process(List<String> regexList, List<String> extractorList){
 		List<Map<String, String>> extractResultList = new ArrayList<Map<String, String>>(); 
 		//对源码进行分段处理
-		ArrayList<List<String>> sourceCodeLists = PrimaryTemplateGenerator.fragment(extractorList);//divided(startTag, extractorList);
+		ArrayList<List<String>> sourceCodeLists = PrimaryTemplateGenerator.fragment(extractorList);
 		for(int i = 0; i < sourceCodeLists.size(); i++){
 			List<String> sourceCodeList = sourceCodeLists.get(i);
-			System.out.println("*****************************");
-			System.out.println(sourceCodeList);
-//			System.out.println(regexList);
 			Map<String, String> resultMap = parser(regexList, sourceCodeList);
 			extractResultList.add(resultMap);
 		}
@@ -28,7 +25,7 @@ public class PTMParser {
 	/**
 	 * 模板解析过程
 	 * */
-	public static Map<String, String> parser(List<String> regexListSource, List<String> sourceCodeList){
+	private static Map<String, String> parser(List<String> regexListSource, List<String> sourceCodeList){
 		List<String> regexList = HtmlProcessUtils.deepCopy(regexListSource);
 		Map<String, String> resultMap = new HashMap<String, String>();
 		int delta = 1;
@@ -46,13 +43,10 @@ public class PTMParser {
 			if(!sourceCode.equals(regexTag)){
 				if(regexTag.equals("#PCDATA")){//直接提取
 					resultMap.put(fieldCount+"", sourceCode);
-//					extractResultList.add(sourceCode);
 					fieldCount ++;
 				}
 				else if(regexTag.contains("?")) {//可选项
 					delta = optionParser(regexList, sourceCodeList, i);
-//					System.out.println(sourceCodeList);
-//					System.out.println(delta);
 					if(delta > 0 ){//有可选项时
 						if(regexTag.contains("#PCDATA")){
 							String cStr = "";
@@ -84,7 +78,7 @@ public class PTMParser {
 		return resultMap;
 	}
 	//处理压缩
-	public static int iteratorParser(List<String> regexList, List<String> sourceCodeList, int index, Map<String, String> resultMap){
+	private static int iteratorParser(List<String> regexList, List<String> sourceCodeList, int index, Map<String, String> resultMap){
 		int delta = 0;
 		int nestLocate = index;
 		int nestCount = 0;
@@ -164,7 +158,7 @@ public class PTMParser {
 			//向后推，取模板长度的字符串，如果不相等，则跳出循环
 			String sStr = "";
 			if(j + templateLen <= sourceCodeList.size())
-				sStr = getNElementReplace(sourceCodeList, j, templateLen);
+				sStr = HtmlProcessUtils.getNElementReplace(sourceCodeList, j, templateLen);
 			if(!templateStr.equals(sStr)) break;
 			
 			for(int i = j; i < j + templateLen; i++){
@@ -187,7 +181,7 @@ public class PTMParser {
 		return delta;
 	}
 	//处理可选
-	public static int optionParser(List<String> regexList, List<String> sourceCodeList, int index){
+	private static int optionParser(List<String> regexList, List<String> sourceCodeList, int index){
 		int delta = 1;
 		String sStr = "";
 		String rStr = "";
@@ -203,8 +197,8 @@ public class PTMParser {
 		}
 		if(!flag){
 			try {
-				sStr = getNElementReplace(sourceCodeList, index, 3);
-				rStr = getNElement(regexList, index + 1, 3);
+				sStr = HtmlProcessUtils.getNElementReplace(sourceCodeList, index, 3);
+				rStr = HtmlProcessUtils.getNElement(regexList, index + 1, 3);
 			} catch (Exception e1) {
 //				System.out.println("后三项越界");
 				sStr = "";
@@ -224,9 +218,8 @@ public class PTMParser {
 			sourceCodeTag = sourceCodeList.get(k);
 			if(!flag){
 				try {
-					sStr = getNElementReplace(sourceCodeList, k, 3);
+					sStr = HtmlProcessUtils.getNElementReplace(sourceCodeList, k, 3);
 				} catch (Exception e) {
-//					System.out.println("后三项越界");
 					sStr = "";
 					rStr = "";
 				}
@@ -239,30 +232,5 @@ public class PTMParser {
 		for (int c = index + 1; c < index + delta; c++)
 			regexList.add(index, "placeholder");
 		return delta;
-	}
-	/**
-	 * 向后取list中n个元素
-	 * */
-	public static String getNElement(List<String> sourceCodeList, int index, int n){
-		String string = "";
-		for(int i = index; i < index + n; i++){
-			if(i >= sourceCodeList.size()) return string;
-			string += sourceCodeList.get(i).replace("(", "").replace(")+", "").replace("?", "");
-		}
-		return string;
-	}
-	/**
-	 * 向后取list中n个元素,文本用#PCDATA代替
-	 * */
-	public static String getNElementReplace(List<String> sourceCodeList, int index, int n){
-		String string = "";
-		String element = "";
-		for(int i = index; i < index + n; i++){
-			if(i >= sourceCodeList.size()) return string;
-			element = sourceCodeList.get(i);
-			if(HtmlProcessUtils.isStr(element)) element = "#PCDATA";
-				string += element;
-		}
-		return string;
 	}
 }

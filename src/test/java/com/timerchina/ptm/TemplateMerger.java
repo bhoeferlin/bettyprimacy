@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
 import com.timerchina.itoolkit.common.db.DBUtil;
-import com.timerchina.singleregex.FinalTemplateGenerator;
+import com.timerchina.pagetreematch.FinalTemplateGenerator;
 
 public class TemplateMerger {
 	private static DBUtil db = new DBUtil("jdbc:mysql://101.227.67.231:3306/extract_test?user=spiderman&password=2008rain");

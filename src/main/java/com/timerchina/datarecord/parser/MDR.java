@@ -1,4 +1,4 @@
-package com.timerchina.datarecordparser;
+package com.timerchina.datarecord.parser;
 
 import java.io.*;
 import java.util.*;

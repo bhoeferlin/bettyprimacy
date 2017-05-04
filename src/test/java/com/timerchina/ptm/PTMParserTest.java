@@ -8,8 +8,9 @@ import java.util.Map;
 import com.alibaba.fastjson.JSON;
 import com.timerchina.excel.ExcelWriter;
 import com.timerchina.itoolkit.common.db.DBUtil;
-import com.timerchina.regex.parser.PTMParser;
-import com.timerchina.singleregex.PrimaryTemplateGenerator;
+import com.timerchina.pagetreematch.HtmlProcessUtils;
+import com.timerchina.pagetreematch.PrimaryTemplateGenerator;
+import com.timerchina.pagetreematch.parser.PTMParser;
 
 public class PTMParserTest {
 	private static DBUtil db = new DBUtil("jdbc:mysql://101.227.67.231:3306/extract_test?user=spiderman&password=2008rain");
@@ -31,24 +32,23 @@ public class PTMParserTest {
 			templateMap.put(sitename, regexList);
 		}
 	*/	
-		String selectSql = "select id, sitename, forumname, extractresult,regexresult from regex_other where is_can = 1 and id = 3";//, regexresult id >= 1 and id <= 19
+		String selectSql = "select id, sitename, forumname, extractresult,regexresult from regex_other where is_can = 1 and id = 3";
 		List<Map<String, String>> dataMapList = db.executeQuery(selectSql);
 		for(int i = 0; i < dataMapList.size(); i++){
 			writer = new ExcelWriter(titles.split(","));
 			String id = dataMapList.get(i).get("id");
 			String extractor = dataMapList.get(i).get("extractresult");
 			String sitename = dataMapList.get(i).get("sitename");
-//			List<String> regexList = templateMap.get(sitename);//
 			String forumname = dataMapList.get(i).get("forumname");
-			String fullFile = userDir + File.separator + "extractresult/other/易车网/" + id + "_"+ sitename + "_" + forumname;//
-		
-			@SuppressWarnings("unchecked")
+			String fullFile = userDir + File.separator + "extractresult/other/易车网/" + id + "_"+ sitename + "_" + forumname;
+	
 			String regex = dataMapList.get(i).get("regexresult");
+			@SuppressWarnings("unchecked")
 			List<String> regexList = (List<String>) JSON.parse(regex);
-//			
+	
 			System.out.println("当前运行id:"+id);
 			long start = System.currentTimeMillis();
-			List<String> extractorList = PrimaryTemplateGenerator.normalize(extractor);
+			List<String> extractorList = HtmlProcessUtils.normalize(extractor);
 			List<Map<String, String>> extractResultList = PTMParser.process(regexList, extractorList);
 			long end = System.currentTimeMillis();
 			System.out.println("解析共用时："+(end - start)+"ms");
